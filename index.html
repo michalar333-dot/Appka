@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Otázka pro tebe 💌</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pink: #ff4d8d;
+      --pink-dark: #e0336f;
+      --pink-light: #ffe3ee;
+      --text: #4a2537;
+      --muted: #8a6275;
+      --card: #ffffffee;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: "Quicksand", system-ui, sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #ffd6e7 0%, #ffeef5 50%, #ffd9d0 100%);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* plovoucí srdíčka v pozadí */
+    .bg-hearts { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .bg-hearts span {
+      position: absolute;
+      bottom: -40px;
+      font-size: 22px;
+      opacity: 0.5;
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      to { transform: translateY(-115vh) rotate(25deg); opacity: 0; }
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 460px;
+      background: var(--card);
+      border-radius: 28px;
+      padding: 36px 28px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(224, 51, 111, 0.18);
+      backdrop-filter: blur(6px);
+    }
+
+    .screen { display: none; animation: pop 0.45s ease; }
+    .screen.active { display: block; }
+    @keyframes pop {
+      from { opacity: 0; transform: scale(0.94) translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .emoji-big { font-size: 72px; line-height: 1; margin-bottom: 16px; }
+    .bounce { animation: bounce 1.4s ease-in-out infinite; display: inline-block; }
+    @keyframes bounce { 50% { transform: translateY(-10px) scale(1.05); } }
+
+    h1 {
+      font-family: "Pacifico", cursive;
+      font-weight: 400;
+      font-size: 32px;
+      color: var(--pink);
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    p.sub { color: var(--muted); font-size: 17px; margin-bottom: 24px; }
+
+    .btn {
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 18px;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 34px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-yes {
+      background: var(--pink);
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(255, 77, 141, 0.4);
+    }
+    .btn-yes:hover { background: var(--pink-dark); }
+    .btn-no {
+      background: #fff;
+      color: var(--muted);
+      border: 2px solid #f1c6d6;
+      transition: left 0.25s ease, top 0.25s ease;
+      z-index: 50;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+    .buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      min-height: 64px;
+    }
+
+    #noHint { margin-top: 18px; min-height: 22px; color: var(--muted); font-size: 15px; }
+
+    /* formulář */
+    .field { text-align: left; margin-bottom: 18px; }
+    .field label { display: block; font-weight: 700; margin-bottom: 6px; }
+    .field input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 17px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 2px solid #f1c6d6;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+    .field input:focus { border-color: var(--pink); }
+
+    .times { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip {
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      border: 2px solid #f1c6d6;
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+    .chip.selected { background: var(--pink); border-color: var(--pink); color: #fff; }
+
+    /* jídlo */
+    .food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+    .food {
+      font-family: inherit;
+      border: 3px solid transparent;
+      background: var(--pink-light);
+      border-radius: 20px;
+      padding: 18px 8px;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, background 0.15s;
+      color: var(--text);
+    }
+    .food:hover { transform: translateY(-3px); }
+    .food .e { font-size: 46px; display: block; margin-bottom: 6px; }
+    .food .n { font-weight: 700; font-size: 17px; }
+    .food.selected { border-color: var(--pink); background: #fff; transform: scale(1.04); }
+
+    /* smlouva */
+    .contract {
+      text-align: left;
+      background: #fffaf3;
+      border: 2px dashed #e8b9c9;
+      border-radius: 18px;
+      padding: 22px 20px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      line-height: 1.6;
+      position: relative;
+    }
+    .contract h2 {
+      font-family: "Pacifico", cursive;
+      font-weight: 400;
+      text-align: center;
+      color: var(--pink);
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .contract ol { padding-left: 20px; margin: 10px 0; }
+    .contract li { margin-bottom: 6px; }
+    .contract b { color: var(--pink-dark); }
+    .check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      text-align: left;
+      margin: 0 0 14px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .check input { width: 20px; height: 20px; accent-color: var(--pink); flex-shrink: 0; margin-top: 2px; }
+
+    .signature {
+      font-family: "Pacifico", cursive;
+      font-size: 26px;
+      color: var(--pink-dark);
+      text-align: center;
+      margin-top: 10px;
+    }
+    .stamp {
+      position: absolute;
+      right: 12px;
+      bottom: 10px;
+      transform: rotate(-14deg);
+      border: 3px solid var(--pink);
+      color: var(--pink);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      letter-spacing: 1px;
+      opacity: 0.85;
+      animation: stamp 0.4s ease;
+    }
+    @keyframes stamp { from { transform: rotate(-14deg) scale(2.5); opacity: 0; } }
+
+    .actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .toast { margin-top: 12px; min-height: 20px; color: var(--pink-dark); font-weight: 600; font-size: 15px; }
+
+    .progress { display: flex; gap: 6px; justify-content: center; margin-bottom: 22px; }
+    .progress i { width: 8px; height: 8px; border-radius: 50%; background: #f1c6d6; }
+    .progress i.on { background: var(--pink); }
+
+    /* konfety */
+    .confetti {
+      position: fixed;
+      top: -30px;
+      pointer-events: none;
+      z-index: 100;
+      animation: fall linear forwards;
+    }
+    @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
+
+    @media (max-width: 400px) {
+      .card { padding: 28px 18px; }
+      h1 { font-size: 27px; }
+      .emoji-big { font-size: 60px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-hearts" id="bgHearts"></div>
+
+  <main class="card">
+    <!-- 1) Otázka -->
+    <section class="screen active" id="s-ask">
+      <div class="emoji-big"><span class="bounce">🥺</span></div>
+      <h1>Půjdeš se mnou na rande?</h1>
+      <p class="sub">Dobře si to rozmysli… 💭</p>
+      <div class="buttons" id="askButtons">
+        <button class="btn btn-yes" id="yesBtn">Ano 💖</button>
+        <button class="btn btn-no" id="noBtn">Ne</button>
+      </div>
+      <div id="noHint"></div>
+    </section>
+
+    <!-- 2) Opravdu ano -->
+    <section class="screen" id="s-yes">
+      <div class="emoji-big"><span class="bounce">🥰</span></div>
+      <h1>Opravdu jsi zmáčkla ANO!</h1>
+      <p class="sub">Tohle si pamatuju navždy. Už není cesty zpět 😏💕</p>
+      <button class="btn btn-yes" data-next="s-when">Tak jdeme na to ➜</button>
+    </section>
+
+    <!-- 3) Kdy -->
+    <section class="screen" id="s-when">
+      <div class="progress"><i class="on"></i><i></i><i></i></div>
+      <div class="emoji-big">📅</div>
+      <h1>Kdy můžeš?</h1>
+      <p class="sub">Vyber den a čas, přizpůsobím se 😌</p>
+      <div class="field">
+        <label for="dateInput">Den</label>
+        <input type="date" id="dateInput" />
+      </div>
+      <div class="field">
+        <label for="timeInput">Čas</label>
+        <input type="time" id="timeInput" step="900" />
+        <div class="times" id="timeChips">
+          <button type="button" class="chip">17:00</button>
+          <button type="button" class="chip">18:00</button>
+          <button type="button" class="chip">19:00</button>
+          <button type="button" class="chip">20:00</button>
+        </div>
+      </div>
+      <button class="btn btn-yes" id="whenNext" disabled>Pokračovat ➜</button>
+    </section>
+
+    <!-- 4) Večeře -->
+    <section class="screen" id="s-food">
+      <div class="progress"><i class="on"></i><i class="on"></i><i></i></div>
+      <div class="emoji-big">🍽️</div>
+      <h1>Co si dáš k večeři?</h1>
+      <p class="sub">Vyber, na co máš chuť</p>
+      <div class="food-grid" id="foodGrid">
+        <button type="button" class="food" data-food="Sushi"><span class="e">🍣</span><span class="n">Sushi</span></button>
+        <button type="button" class="food" data-food="Pizza"><span class="e">🍕</span><span class="n">Pizza</span></button>
+        <button type="button" class="food" data-food="Ramen"><span class="e">🍜</span><span class="n">Ramen</span></button>
+        <button type="button" class="food" data-food="Brambory"><span class="e">🥔</span><span class="n">Brambory</span></button>
+      </div>
+      <button class="btn btn-yes" id="foodNext" disabled>Pokračovat ➜</button>
+    </section>
+
+    <!-- 5) Date agreement -->
+    <section class="screen" id="s-agree">
+      <div class="progress"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+      <div class="contract" id="contract">
+        <h2>Date Agreement 📜</h2>
+        <p>Níže podepsaná tímto slavnostně souhlasí s rande za těchto podmínek:</p>
+        <ol>
+          <li>Kdy: <b id="cDate"></b> v <b id="cTime"></b></li>
+          <li>K večeři: <b id="cFood"></b></li>
+          <li>Obě strany se dostaví hezky oblečené a s dobrou náladou 😊</li>
+          <li>Mobily zůstanou většinu večera v kapse 📵</li>
+          <li>Na konci večera je nárok na minimálně jedno obejmutí 🤗</li>
+        </ol>
+        <p>Tato smlouva je nevypověditelná a nelze ji vzít zpět. 😇</p>
+        <div class="signature" id="signature"></div>
+      </div>
+
+      <div id="signBlock">
+        <label class="check"><input type="checkbox" id="agreeCheck" /> Přečetla jsem si podmínky a souhlasím se vším 💕</label>
+        <div class="field">
+          <label for="nameInput">Podpis (tvoje jméno)</label>
+          <input type="text" id="nameInput" placeholder="Napiš své jméno" autocomplete="given-name" />
+        </div>
+        <button class="btn btn-yes" id="signBtn" disabled>Podepsat ✍️</button>
+      </div>
+
+      <div id="doneBlock" hidden>
+        <h1 style="margin-top:4px">Máme rande! 🎉</h1>
+        <p class="sub">Pošli mi prosím podepsanou smlouvu 💌</p>
+        <div class="actions">
+          <button class="btn btn-yes" id="shareBtn">Poslat odpověď 📨</button>
+        </div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = { date: "", time: "", food: "", name: "" };
+
+    /* ---------- přepínání obrazovek ---------- */
+    function show(id) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      noBtn.style.display = id === "s-ask" ? "" : "none";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    document.querySelectorAll("[data-next]").forEach(b =>
+      b.addEventListener("click", () => show(b.dataset.next))
+    );
+
+    /* ---------- srdíčka v pozadí ---------- */
+    const bg = document.getElementById("bgHearts");
+    const heartChars = ["💖", "💕", "💗", "❤️", "💘"];
+    for (let i = 0; i < 18; i++) {
+      const h = document.createElement("span");
+      h.textContent = heartChars[i % heartChars.length];
+      h.style.left = Math.random() * 100 + "%";
+      h.style.fontSize = 14 + Math.random() * 20 + "px";
+      h.style.animationDuration = 8 + Math.random() * 10 + "s";
+      h.style.animationDelay = -Math.random() * 15 + "s";
+      bg.appendChild(h);
+    }
+
+    /* ---------- ujíždějící tlačítko NE ---------- */
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+    const noHint = document.getElementById("noHint");
+    const hints = [
+      "Hups, to tlačítko nějak ujíždí 🙈",
+      "Tohle asi nepůjde…",
+      "Zkus radši to růžové 😇",
+      "Ne ne ne, to tlačítko je rozbité 🔧",
+      "Vážně to pořád zkoušíš? 😂",
+      "Ano je o hodně větší, ne? 👀",
+      "Vzdej to, stejně chceš 💘",
+    ];
+    let tries = 0;
+
+    function overlaps(a, b, pad = 16) {
+      return !(a.right + pad < b.left || a.left - pad > b.right ||
+               a.bottom + pad < b.top || a.top - pad > b.bottom);
+    }
+
+    function runAway(e) {
+      if (e) e.preventDefault();
+      const w = noBtn.offsetWidth, h = noBtn.offsetHeight;
+      const margin = 12;
+      const maxX = window.innerWidth - w - margin;
+      const maxY = window.innerHeight - h - margin;
+      const yesRect = yesBtn.getBoundingClientRect();
+      const cur = noBtn.getBoundingClientRect();
+
+      let x, y, tries2 = 0;
+      do {
+        x = margin + Math.random() * (maxX - margin);
+        y = margin + Math.random() * (maxY - margin);
+        tries2++;
+        const r = { left: x, top: y, right: x + w, bottom: y + h };
+        const farEnough = Math.hypot(x - cur.left, y - cur.top) > 120;
+        if (!overlaps(r, yesRect) && farEnough) break;
+      } while (tries2 < 50);
+
+      if (noBtn.style.position !== "fixed") {
+        // první útěk: "vytrhnout" tlačítko z layoutu na jeho aktuální místo
+        noBtn.style.transition = "none";
+        noBtn.style.position = "fixed";
+        noBtn.style.left = cur.left + "px";
+        noBtn.style.top = cur.top + "px";
+        document.body.appendChild(noBtn);
+        noBtn.offsetWidth; // reflow
+        noBtn.style.transition = "";
+      }
+      noBtn.style.left = x + "px";
+      noBtn.style.top = y + "px";
+
+      tries++;
+      noHint.textContent = hints[Math.min(tries - 1, hints.length - 1)];
+      const scale = Math.min(1 + tries * 0.12, 2);
+      yesBtn.style.transform = `scale(${scale})`;
+      if (tries >= 4) noBtn.textContent = ["Ne", "Určitě?", "Fakt?", "🙈", "Nee"][tries % 5];
+    }
+
+    noBtn.addEventListener("mouseenter", runAway);
+    noBtn.addEventListener("pointerdown", runAway);
+    noBtn.addEventListener("touchstart", runAway, { passive: false });
+    noBtn.addEventListener("click", runAway);
+    noBtn.addEventListener("focus", runAway);
+    // na počítači uteče, i když se k němu kurzor jen přiblíží
+    document.addEventListener("mousemove", e => {
+      if (!document.getElementById("s-ask").classList.contains("active")) return;
+      const r = noBtn.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      if (Math.hypot(e.clientX - cx, e.clientY - cy) < Math.max(r.width, r.height) * 0.9) runAway();
+    });
+    window.addEventListener("resize", () => { if (noBtn.style.position === "fixed") runAway(); });
+
+    yesBtn.addEventListener("click", () => {
+      confetti();
+      show("s-yes");
+    });
+
+    /* ---------- konfety ---------- */
+    function confetti(count = 70) {
+      const items = ["💖", "💕", "✨", "🎉", "💗", "🌸"];
+      for (let i = 0; i < count; i++) {
+        const c = document.createElement("div");
+        c.className = "confetti";
+        c.textContent = items[Math.floor(Math.random() * items.length)];
+        c.style.left = Math.random() * 100 + "vw";
+        c.style.fontSize = 16 + Math.random() * 18 + "px";
+        c.style.animationDuration = 2.2 + Math.random() * 2 + "s";
+        c.style.animationDelay = Math.random() * 0.6 + "s";
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 5000);
+      }
+    }
+
+    /* ---------- kdy ---------- */
+    const dateInput = document.getElementById("dateInput");
+    const timeInput = document.getElementById("timeInput");
+    const whenNext = document.getElementById("whenNext");
+    const chips = document.querySelectorAll("#timeChips .chip");
+
+    const today = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    dateInput.min = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+    function updateWhen() {
+      state.date = dateInput.value;
+      state.time = timeInput.value;
+      chips.forEach(c => c.classList.toggle("selected", c.textContent === state.time));
+      whenNext.disabled = !(state.date && state.time);
+    }
+    dateInput.addEventListener("input", updateWhen);
+    timeInput.addEventListener("input", updateWhen);
+    chips.forEach(c => c.addEventListener("click", () => {
+      timeInput.value = c.textContent;
+      updateWhen();
+    }));
+    whenNext.addEventListener("click", () => show("s-food"));
+
+    /* ---------- večeře ---------- */
+    const foodNext = document.getElementById("foodNext");
+    const foods = document.querySelectorAll(".food");
+    foods.forEach(f => f.addEventListener("click", () => {
+      foods.forEach(x => x.classList.remove("selected"));
+      f.classList.add("selected");
+      state.food = f.dataset.food;
+      foodNext.disabled = false;
+    }));
+    foodNext.addEventListener("click", () => {
+      fillContract();
+      show("s-agree");
+    });
+
+    /* ---------- smlouva ---------- */
+    const foodEmoji = { Sushi: "🍣", Pizza: "🍕", Ramen: "🍜", Brambory: "🥔" };
+
+    function formatDate(iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString("cs-CZ", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
+      });
+    }
+
+    function fillContract() {
+      document.getElementById("cDate").textContent = formatDate(state.date);
+      document.getElementById("cTime").textContent = state.time;
+      document.getElementById("cFood").textContent = `${state.food} ${foodEmoji[state.food]}`;
+    }
+
+    const agreeCheck = document.getElementById("agreeCheck");
+    const nameInput = document.getElementById("nameInput");
+    const signBtn = document.getElementById("signBtn");
+    function updateSign() {
+      signBtn.disabled = !(agreeCheck.checked && nameInput.value.trim());
+    }
+    agreeCheck.addEventListener("change", updateSign);
+    nameInput.addEventListener("input", updateSign);
+
+    signBtn.addEventListener("click", () => {
+      state.name = nameInput.value.trim();
+      document.getElementById("signature").textContent = state.name;
+      const stamp = document.createElement("div");
+      stamp.className = "stamp";
+      stamp.textContent = "PODEPSÁNO 💘";
+      document.getElementById("contract").appendChild(stamp);
+      document.getElementById("signBlock").hidden = true;
+      document.getElementById("doneBlock").hidden = false;
+      confetti(100);
+    });
+
+    /* ---------- odeslání odpovědi ---------- */
+    const toast = document.getElementById("toast");
+    function summary() {
+      return `💌 Date Agreement\n` +
+        `✅ Ano, půjdu na rande!\n` +
+        `📅 ${formatDate(state.date)} v ${state.time}\n` +
+        `🍽️ K večeři: ${state.food} ${foodEmoji[state.food]}\n` +
+        `✍️ Podepsáno: ${state.name}`;
+    }
+
+    document.getElementById("shareBtn").addEventListener("click", async () => {
+      const text = summary();
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: "Date Agreement 💌", text });
+          toast.textContent = "Odesláno! Těším se 💖";
+          return;
+        } catch (err) {
+          if (err.name === "AbortError") return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        toast.textContent = "Zkopírováno! Vlož mi to do zprávy 💖";
+      } catch {
+        window.location.href = "sms:?&body=" + encodeURIComponent(text);
+      }
+    });
+  </script>
+</body>
+</html>
